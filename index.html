@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Set up your LED panel</title>
+<style>
+:root{--bg:#0b0f16;--card:#141b27;--line:#263247;--text:#e7edf6;--muted:#93a0b5;--amber:#ffb020;--cyan:#22d3ee;--green:#34d399}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:19px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:460px;margin:0 auto;padding:20px 20px 40px;min-height:100vh;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.dots{display:flex;gap:8px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--amber)}
+select{font:inherit;font-size:15px;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+.n{color:var(--amber);font:600 14px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase}
+h1{font-size:28px;line-height:1.15;margin:4px 0 14px}
+p{margin:0 0 12px}
+/* The panel, drawn: a black slab with what the glass shows at this step. */
+.panel{background:#050505;border-radius:10px;border:5px solid #0c0c0c;box-shadow:0 12px 30px #0008;aspect-ratio:2;margin:6px 0 18px;display:flex;align-items:center;justify-content:center;gap:5%;padding:5%;
+  font:700 clamp(15px,5.4vw,25px)/1.25 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-align:center}
+.qr{height:100%;aspect-ratio:1;background:#fff;border-radius:2px;
+  background-image:conic-gradient(#000 25%,#fff 0 50%,#000 0 75%,#fff 0);background-size:22% 22%;position:relative}
+.qr::before,.qr::after{content:"";position:absolute;width:30%;height:30%;border:.5em solid #000;background:#fff;box-shadow:inset 0 0 0 .32em #fff,inset 0 0 0 2em #000}
+.qr::before{left:0;top:0}.qr::after{right:0;top:0}
+.bars{width:100%;height:100%;background:linear-gradient(90deg,#f43f5e 33%,#34d399 0 66%,#3b82f6 0);border:.25em solid #fff}
+.a{color:var(--amber)}.g{color:var(--green)}.c{color:var(--cyan)}.w{color:#fff}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:6px 0 14px;font-size:17px}
+summary{cursor:pointer;color:var(--muted)}
+details p{margin:10px 0 2px}
+.nav{display:flex;gap:12px;margin-top:auto;padding-top:18px}
+button{font:inherit;font-weight:700;padding:14px 18px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--text);flex:1}
+button.go{background:var(--amber);border-color:var(--amber);color:#111;flex:2}
+button[disabled]{opacity:.35}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div class="dots" id="dots"></div>
+    <select id="lang"><option value="es">Español</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="en">English</option></select></div>
+  <div class="n" id="count"></div>
+  <h1 id="title"></h1>
+  <div class="panel" id="panel"></div>
+  <div id="body"></div>
+  <details id="help"><summary id="helpTitle"></summary><div id="helpBody"></div></details>
+  <div class="nav"><button id="back"></button><button id="next" class="go"></button></div>
+</main>
+<script>
+// A step-by-step guide to setting up one panel. It is a single file that needs nothing from the
+// network once it is open, because at step 2 the phone joins the panel's own Wi-Fi and is offline.
+// ?n=md puts the panel's name into step 4; ?l=es picks the language.
+const q = new URLSearchParams(location.search);
+const NAME = (q.get('n') || '').replace(/[^a-z0-9-]/gi, '').toLowerCase();
+const ADDRESS = NAME ? NAME + '.local' : null;
+
+const T = {
+  en: {ui: ['Step', 'of', 'Back', 'Next', 'Start again', "It didn't work"],
+    steps: [
+      ['Plug in your panel', ['Use the power supply from the box.', 'Coloured bars appear for a moment. Then the panel shows a square code.'],
+        ['The panel stays dark? Check the plug at both ends, and the wall socket.']],
+      ["Point your phone's camera at the panel", ['Open the camera, as if taking a photo, and hold the phone an arm’s length from the panel.', 'A message appears on your phone, like <b>Join network</b>. Tap it.'],
+        ['Nothing appears? Every few seconds the panel also shows a <b>Wi-Fi name</b> and a <b>password</b> in words.', 'Open your phone’s Wi-Fi settings, choose that name, and type that password.']],
+      ['Choose your home Wi-Fi', ['A page opens on your phone by itself.', 'Pick your home Wi-Fi, type its password, and tap <b>Connect</b>.', 'The panel says CONNECTING, then DONE.'],
+        ['The panel says WRONG PASSWORD? Type it again. Tick “Show the password” to check what you typed.', 'No page opened? Open your browser and type <b>192.168.4.1</b>.', 'Your Wi-Fi is not in the list? Move the panel closer to your router.']],
+      ['Scan the second code', ['The panel now shows a new code and its own address.', 'Wait a moment for your phone to go back to your home Wi-Fi. Then point the camera at the panel again and tap the message.', 'Your panel’s page opens.'],
+        ['Or type the address the panel shows into your browser: ' + (ADDRESS ? '<b>' + ADDRESS + '</b>, or the number under it.' : 'the name ending in .local, or the number under it.'), 'The code went away? Unplug the panel and plug it back in: it shows the address again.']],
+      ['Say where you are and what to show', ['Type your town.', 'Switch on the screens you like. The panel changes straight away.', 'Tap <b>Done</b>. That is all!'],
+        ['New router, or moved house? Unplug the panel, plug it back in and wait three minutes. It shows the first code again, and you start from step 2.']],
+    ],
+    glass: [['', ''], ['SCAN ME', 'WITH A PHONE'], ['CONNECTING', 'DONE!'], ['', ''], ['GO', '18°']]},
+  es: {ui: ['Paso', 'de', 'Atrás', 'Siguiente', 'Empezar de nuevo', 'No ha funcionado'],
+    steps: [
+      ['Enchufa tu panel', ['Usa la fuente de alimentación de la caja.', 'Aparecen unas barras de colores un momento. Luego el panel muestra un código cuadrado.'],
+        ['¿El panel sigue apagado? Revisa el enchufe en los dos extremos y la toma de la pared.']],
+      ['Apunta la cámara del móvil al panel', ['Abre la cámara, como para hacer una foto, y sujeta el móvil a un brazo de distancia del panel.', 'En el móvil aparece un mensaje, como <b>Unirse a la red</b>. Púlsalo.'],
+        ['¿No aparece nada? Cada pocos segundos el panel también muestra un <b>nombre de Wi-Fi</b> y una <b>contraseña</b> con letras.', 'Abre los ajustes de Wi-Fi del móvil, elige ese nombre y escribe esa contraseña.']],
+      ['Elige el Wi-Fi de tu casa', ['En el móvil se abre una página sola.', 'Elige el Wi-Fi de tu casa, escribe su contraseña y pulsa <b>Conectar</b>.', 'El panel dice CONECTANDO y luego ¡LISTO!'],
+        ['¿El panel dice CONTRASEÑA INCORRECTA? Escríbela otra vez. Marca «Mostrar la contraseña» para ver lo que has escrito.', '¿No se ha abierto ninguna página? Abre el navegador y escribe <b>192.168.4.1</b>.', '¿Tu Wi-Fi no está en la lista? Acerca el panel al router.']],
+      ['Escanea el segundo código', ['El panel muestra ahora un código nuevo y su propia dirección.', 'Espera un momento a que el móvil vuelva al Wi-Fi de casa. Luego apunta otra vez la cámara al panel y pulsa el mensaje.', 'Se abre la página de tu panel.'],
+        ['O escribe en el navegador la dirección que muestra el panel: ' + (ADDRESS ? '<b>' + ADDRESS + '</b>, o el número de debajo.' : 'el nombre que acaba en .local, o el número de debajo.'), '¿Ha desaparecido el código? Desenchufa el panel y vuelve a enchufarlo: muestra la dirección otra vez.']],
+      ['Di dónde estás y qué quieres ver', ['Escribe tu ciudad.', 'Activa las pantallas que te gusten. El panel cambia al momento.', 'Pulsa <b>Listo</b>. ¡Eso es todo!'],
+        ['¿Router nuevo o te has mudado? Desenchufa el panel, vuelve a enchufarlo y espera tres minutos. Muestra otra vez el primer código y empiezas desde el paso 2.']],
+    ],
+    glass: [['', ''], ['ESCANEA', 'CON EL MÓVIL'], ['CONECTANDO', '¡LISTO!'], ['', ''], ['GO', '18°']]},
+  de: {ui: ['Schritt', 'von', 'Zurück', 'Weiter', 'Von vorn', 'Es hat nicht geklappt'],
+    steps: [
+      ['Steck dein Panel ein', ['Nimm das Netzteil aus der Schachtel.', 'Kurz erscheinen bunte Balken. Dann zeigt das Panel einen quadratischen Code.'],
+        ['Das Panel bleibt dunkel? Prüfe den Stecker an beiden Enden und die Steckdose.']],
+      ['Richte die Handykamera auf das Panel', ['Öffne die Kamera, als wolltest du ein Foto machen, und halte das Handy eine Armlänge vor das Panel.', 'Auf dem Handy erscheint eine Meldung wie <b>Netzwerk beitreten</b>. Tippe darauf.'],
+        ['Es erscheint nichts? Alle paar Sekunden zeigt das Panel auch einen <b>WLAN-Namen</b> und ein <b>Passwort</b> in Buchstaben.', 'Öffne die WLAN-Einstellungen deines Handys, wähle diesen Namen und gib dieses Passwort ein.']],
+      ['Wähle dein WLAN', ['Auf dem Handy öffnet sich von selbst eine Seite.', 'Wähle dein WLAN, gib das Passwort ein und tippe auf <b>Verbinden</b>.', 'Das Panel zeigt VERBINDE, dann FERTIG!'],
+        ['Das Panel zeigt FALSCHES PASSWORT? Gib es noch einmal ein. Mit „Passwort anzeigen“ siehst du, was du getippt hast.', 'Es hat sich keine Seite geöffnet? Öffne den Browser und gib <b>192.168.4.1</b> ein.', 'Dein WLAN fehlt in der Liste? Stell das Panel näher an den Router.']],
+      ['Scanne den zweiten Code', ['Das Panel zeigt jetzt einen neuen Code und seine eigene Adresse.', 'Warte kurz, bis dein Handy wieder in deinem WLAN ist. Richte dann die Kamera noch einmal auf das Panel und tippe auf die Meldung.', 'Die Seite deines Panels öffnet sich.'],
+        ['Oder gib die Adresse, die das Panel zeigt, im Browser ein: ' + (ADDRESS ? '<b>' + ADDRESS + '</b> oder die Nummer darunter.' : 'den Namen mit .local am Ende oder die Nummer darunter.'), 'Der Code ist weg? Zieh den Stecker und steck das Panel wieder ein: Es zeigt die Adresse erneut.']],
+      ['Sag, wo du bist und was es zeigen soll', ['Gib deinen Ort ein.', 'Schalte die Bildschirme ein, die dir gefallen. Das Panel wechselt sofort.', 'Tippe auf <b>Fertig</b>. Das ist alles!'],
+        ['Neuer Router oder umgezogen? Zieh den Stecker, steck das Panel wieder ein und warte drei Minuten. Es zeigt wieder den ersten Code, und du beginnst bei Schritt 2.']],
+    ],
+    glass: [['', ''], ['MIT DEM HANDY', 'SCANNEN'], ['VERBINDE', 'FERTIG!'], ['', ''], ['GO', '18°']]},
+  fr: {ui: ['Étape', 'sur', 'Retour', 'Suivant', 'Recommencer', 'Ça n’a pas marché'],
+    steps: [
+      ['Branche ton panneau', ['Utilise l’alimentation de la boîte.', 'Des barres de couleur apparaissent un instant. Puis le panneau affiche un code carré.'],
+        ['Le panneau reste noir ? Vérifie la prise aux deux bouts, et la prise murale.']],
+      ['Pointe l’appareil photo du téléphone vers le panneau', ['Ouvre l’appareil photo, comme pour prendre une photo, et tiens le téléphone à un bras du panneau.', 'Un message apparaît sur le téléphone, comme <b>Rejoindre le réseau</b>. Touche-le.'],
+        ['Rien n’apparaît ? Toutes les quelques secondes, le panneau affiche aussi un <b>nom de Wi-Fi</b> et un <b>mot de passe</b> en lettres.', 'Ouvre les réglages Wi-Fi du téléphone, choisis ce nom et tape ce mot de passe.']],
+      ['Choisis le Wi-Fi de la maison', ['Une page s’ouvre toute seule sur le téléphone.', 'Choisis le Wi-Fi de la maison, tape son mot de passe et touche <b>Connecter</b>.', 'Le panneau affiche CONNEXION, puis C’EST BON !'],
+        ['Le panneau affiche MAUVAIS MOT DE PASSE ? Retape-le. Coche « Afficher le mot de passe » pour voir ce que tu as tapé.', 'Aucune page ne s’est ouverte ? Ouvre le navigateur et tape <b>192.168.4.1</b>.', 'Ton Wi-Fi n’est pas dans la liste ? Rapproche le panneau de la box.']],
+      ['Scanne le second code', ['Le panneau affiche maintenant un nouveau code et sa propre adresse.', 'Attends un instant que le téléphone revienne sur le Wi-Fi de la maison. Puis pointe de nouveau l’appareil photo vers le panneau et touche le message.', 'La page de ton panneau s’ouvre.'],
+        ['Ou tape dans le navigateur l’adresse affichée par le panneau : ' + (ADDRESS ? '<b>' + ADDRESS + '</b>, ou le numéro en dessous.' : 'le nom qui finit par .local, ou le numéro en dessous.'), 'Le code a disparu ? Débranche le panneau et rebranche-le : il affiche de nouveau l’adresse.']],
+      ['Dis où tu es et quoi afficher', ['Tape ta ville.', 'Active les écrans qui te plaisent. Le panneau change tout de suite.', 'Touche <b>Terminé</b>. C’est tout !'],
+        ['Nouvelle box, ou déménagement ? Débranche le panneau, rebranche-le et attends trois minutes. Il affiche de nouveau le premier code, et tu reprends à l’étape 2.']],
+    ],
+    glass: [['', ''], ['SCANNE AVEC', 'LE MOBILE'], ['CONNEXION', 'C’EST BON !'], ['', ''], ['GO', '18°']]},
+};
+
+const $ = id => document.getElementById(id);
+const wanted = (q.get('l') || navigator.language || 'en').slice(0, 2).toLowerCase();
+let lang = T[wanted] ? wanted : 'en', step = 0;
+
+// What the drawn panel shows at each step.
+function glass(i, words) {
+  if (i === 0) return '<div class="bars"></div>';
+  if (i === 1) return '<div class="qr"></div><div><span class="a">' + words[0] + '</span><br><span class="w">' + words[1] + '</span></div>';
+  if (i === 2) return '<div><span class="a">' + words[0] + ' …</span><br><span class="g">' + words[1] + '</span></div>';
+  if (i === 3) return '<div class="qr"></div><div><span class="w">' + (NAME || 'md').toUpperCase() + '</span><br><span style="color:#64748b">.LOCAL</span><br><span class="c" style="font-size:.7em">192.168…</span></div>';
+  return '<div style="text-align:left;width:100%"><span class="g" style="font-size:1.9em">' + words[0] + '</span><span class="a" style="float:right;margin-top:.6em">' + words[1] + '</span></div>';
+}
+
+function show() {
+  const t = T[lang], s = t.steps[step], last = step === t.steps.length - 1;
+  document.documentElement.lang = lang;
+  $('lang').value = lang;
+  $('dots').innerHTML = t.steps.map((_, i) => '<i class="' + (i <= step ? 'on' : '') + '"></i>').join('');
+  $('count').textContent = t.ui[0] + ' ' + (step + 1) + ' ' + t.ui[1] + ' ' + t.steps.length;
+  $('title').textContent = s[0];
+  $('panel').innerHTML = glass(step, t.glass[step]);
+  $('body').innerHTML = s[1].map(p => '<p>' + p + '</p>').join('');
+  $('help').open = false;
+  $('helpTitle').textContent = t.ui[5];
+  $('helpBody').innerHTML = s[2].map(p => '<p>' + p + '</p>').join('');
+  $('back').textContent = t.ui[2];
+  $('back').disabled = step === 0;
+  $('next').textContent = last ? t.ui[4] : t.ui[3];
+  scrollTo(0, 0);
+}
+$('back').onclick = () => { step = Math.max(0, step - 1); show(); };
+$('next').onclick = () => { step = step === T[lang].steps.length - 1 ? 0 : step + 1; show(); };
+$('lang').onchange = e => { lang = e.target.value; show(); };
+show();
+</script>
+</body>
+</html>
